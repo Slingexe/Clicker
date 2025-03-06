@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Clicker from "@/components/Clicker";
 
 export default function Home() {
