@@ -5,27 +5,33 @@ import { useState, useEffect, useRef } from "react";
 export default function Clicker() {
     const [clicks, setClicks] = useState(0);
     const [autoClickers, setAutoClickers] = useState(0);
+    const [clickMult, setClickMult] = useState(1);
     const [clicksPerSecond, setClicksPerSecond] = useState(0); // CPS state
 
     const clickCountInIntervalRef = useRef(0); // Ref to store click count in the current interval
 
-    // Calculate the price based on the number of auto-clickers (scaling price)
+    // Calculate the price of items
     const autoClickerPrice = Math.floor(10 * Math.pow(1.15, autoClickers));
+    const clickMultPrice = Math.floor(100 * Math.pow(1.50, clickMult));
+
 
     // Load saved progress from localStorage when the component mounts
     useEffect(() => {
         const savedClicks = localStorage.getItem("clicks");
         const savedAutoClickers = localStorage.getItem("autoClickers");
+        const savedMult = localStorage.getItem("clickMult");
 
         if (savedClicks) setClicks(parseInt(savedClicks));
         if (savedAutoClickers) setAutoClickers(parseInt(savedAutoClickers));
+        if (savedMult) setClickMult(parseFloat(savedMult));
     }, []);
 
     // Save progress whenever clicks or autoClickers change
     useEffect(() => {
       localStorage.setItem("clicks", clicks.toString());
       localStorage.setItem("autoClickers", autoClickers.toString());
-    }, [clicks, autoClickers]);
+      localStorage.setItem("clickMult", clickMult.toString());
+    }, [clicks, autoClickers, clickMult]);
 
     // Update clicks automatically by autoClickers every second
     useEffect(() => {
@@ -48,7 +54,7 @@ export default function Clicker() {
     //    Main Function
     // Handle user click and update CPS
     const handleClick = () => {
-      setClicks((prevClicks) => prevClicks + 1);
+      setClicks((prevClicks) => prevClicks + (1 * clickMult));
       clickCountInIntervalRef.current += 1; // Increment ref count for CPS
     };
 
@@ -60,18 +66,27 @@ export default function Clicker() {
       }
     };
 
+    const buyClickMultiplier = () => { 
+      if (clicks >= clickMultPrice) {
+        setClicks(clicks - clickMultPrice);
+        setClickMult(clickMult + 0.25);
+      }
+    };
+
     //    Other Widgets
     // Reset clicks and auto-clickers
     const reset = () => {
       if (confirm("Are you sure you want to reset?") == true) {
         setClicks(0);
         setAutoClickers(0);
+        setClickMult(1);
+        
         setClicksPerSecond(0); // Reset CPS when resetting
         clickCountInIntervalRef.current = 0; // Reset click count for CPS
       }
     };
 
-    
+
     return (
     <div className="w-full overflow-hidden">
       <div className="flex flex-col items-center justify-center min-h-full">
@@ -90,6 +105,15 @@ export default function Clicker() {
             Buy Auto Clicker ({autoClickerPrice} clicks)
         </button>
         <p>Auto Clickers: {autoClickers}</p>
+
+        <button
+          onClick={buyClickMultiplier}
+          disabled={clicks < clickMultPrice}
+          className="p-2 bg-blue-500 text-white rounded disabled:opacity-50 mt-4"
+        >
+            Buy Click Multiplier ({clickMultPrice} clicks)
+        </button>
+        <p>Curren Mult: {clickMult}x</p>
       </div>
       <button
         onClick={reset}
